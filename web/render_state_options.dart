@@ -15,6 +15,9 @@ class RenderStateOptions
   static const String _rasterizerStateCullModeId = '#rasterizer_cull_mode';
   static const String _rasterizerStateFrontFaceId = '#rasterizer_front_face';
 
+  static const String _depthStateEnabledId = '#depth_state_enabled';
+  static const String _depthStateWriteEnabledId = '#depth_write_enabled';
+  static const String _depthStateComparisonId = '#depth_comparison';
 
   //---------------------------------------------------------------------
   // Rasterizer state member variables
@@ -33,9 +36,19 @@ class RenderStateOptions
   // Depth state member variables
   //---------------------------------------------------------------------
 
-
   /// Callback for when the [DepthState] changes.
   StateEvent depthStateCallback;
+  /// Whether the depth state is enabled.
+  InputElement _depthStateEnabledElement;
+  /// Whether writing to the depth buffer is enabled.
+  InputElement _depthStateWriteEnabledElement;
+  /// Comparison operation for the depth buffer.
+  SelectElement _depthStateComparisonElement;
+
+  //---------------------------------------------------------------------
+  // Blend state member variables
+  //---------------------------------------------------------------------
+
   /// Callback for when the [BlendState] changes.
   StateEvent blendStateCallback;
 
@@ -58,6 +71,16 @@ class RenderStateOptions
 
     _rasterizerStateFrontFaceElement = _querySelect(_rasterizerStateFrontFaceId);
     _rasterizerStateFrontFaceElement.on.change.add((_) { _onRasterizerStateChanged(); });
+
+    // Setup the depth state
+    _depthStateEnabledElement = _queryInput(_depthStateEnabledId);
+    _depthStateEnabledElement.on.change.add((_) { _onDepthStateChanged(); });
+
+    _depthStateWriteEnabledElement = _queryInput(_depthStateWriteEnabledId);
+    _depthStateWriteEnabledElement.on.change.add((_) { _onDepthStateChanged(); });
+
+    _depthStateComparisonElement = _querySelect(_depthStateComparisonId);
+    _depthStateComparisonElement.on.change.add((_) { _onDepthStateChanged(); });
   }
 
   /**
@@ -86,7 +109,7 @@ class RenderStateOptions
    */
   void _onRasterizerStateChanged()
   {
-    print('Hiiii');
+    print('onRasterizerStateChanged');
   }
 
   /**
@@ -94,7 +117,7 @@ class RenderStateOptions
    */
   void _onDepthStateChanged()
   {
-
+    print('_onDepthStateChanged');
   }
 
   /**
