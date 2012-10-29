@@ -1,6 +1,6 @@
 
 /// Callback type for when the value is changed
-typedef void StateEvent(Map values);
+typedef void StateEvent(String values);
 
 /**
  * UI for changing the state of the renderer.
@@ -109,7 +109,19 @@ class RenderStateOptions
    */
   void _onRasterizerStateChanged()
   {
-    print('onRasterizerStateChanged');
+    if (rasterizerCallback != null)
+    {
+      String props =
+      '''
+{
+  "cullEnabled": ${_rasterizerStateEnabledElement.checked},
+  "cullMode": ${_rasterizerStateCullModeElement.value},
+  "cullFrontFace": ${_rasterizerStateFrontFaceElement.value}
+}
+      ''';
+
+      rasterizerCallback(props);
+    }
   }
 
   /**
@@ -117,7 +129,19 @@ class RenderStateOptions
    */
   void _onDepthStateChanged()
   {
-    print('_onDepthStateChanged');
+    if (depthStateCallback != null)
+    {
+      String props =
+      '''
+{
+  "depthTestEnabled": ${_depthStateEnabledElement.checked},
+  "depthWriteEnabled": ${_depthStateWriteEnabledElement.checked},
+  "depthComparisonOp": ${_depthStateComparisonElement.value}
+}
+      ''';
+
+      depthStateCallback(props);
+    }
   }
 
   /**
@@ -125,6 +149,22 @@ class RenderStateOptions
    */
   void _onBlendStateChanged()
   {
+    if (blendStateCallback != null)
+    {
+      String props =
+      '''
+{
+  "blendEnable": ${_depthStateEnabledElement.checked},
+  "blendSourceColorFunc": ${_depthStateWriteEnabledElement.checked},
+  "blendDestColorFunc": ${_depthStateComparisonElement.value}
+  "blendSourceAlphaFunc": ${_depthStateComparisonElement.value}
+  "blendDestAlphaFunc": ${_depthStateComparisonElement.value}
+  "blendColorOp": ${_depthStateComparisonElement.value}
+  "blendAlphaOp": ${_depthStateComparisonElement.value}
+}
+      ''';
 
+      blendStateCallback(props);
+    }
   }
 }

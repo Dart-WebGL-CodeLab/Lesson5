@@ -106,6 +106,22 @@ void _initModelButtons()
 }
 
 /**
+ * Callback for when the rasterizer state is modified.
+ */
+void _onRasterizerStateChanged(String value)
+{
+  print(value);
+}
+
+/**
+ * Callback for when the depth state is modified.
+ */
+void _onDepthStateChanged(String value)
+{
+  print(value);
+}
+
+/**
  * Main entrypoint for every Dart application.
  */
 void main()
@@ -124,6 +140,8 @@ void main()
   _initModelButtons();
 
   _renderStateOptions = new RenderStateOptions();
+  _renderStateOptions.rasterizerCallback = _onRasterizerStateChanged;
+  _renderStateOptions.depthStateCallback = _onDepthStateChanged;
 
   // Start the animation loop
   window.requestAnimationFrame(_onUpdate);
