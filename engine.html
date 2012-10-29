@@ -19,12 +19,15 @@
         </div>
       </div>
       <div id='ui'>
+        <!-- Texture display -->
         <h2>Texture</h2>
         <div id='texture'>
           <img id='texture_display' src='web/resources/textures/dart_tex.png' alt='texture' />
         </div>
         <div id='replace' class='button'>Replace Texture</div>
         <br />
+
+        <!-- Model display -->
         <h2>Model</h2>
         <div id='cube_button' class='model_button'>
           <img src='web/resources/ui/cube.png' alt='Cube' />
@@ -38,6 +41,80 @@
         <div id='cylinder_button' class='model_button'>
           <img src='web/resources/ui/cylinder.png' alt='Cylinder' />
         </div>
+
+        <!-- Rasterizer state -->
+        <h2>Rasterizer State</h2>
+        <table>
+          <tr>
+            <td class='state_value_name'>Enabled</td>
+            <td><input type="checkbox" id='rasterizer_state_enabled' /></td>
+          </tr>
+          <tr>
+            <td>Cull Mode</td>
+            <td>
+              <select id='rasterizer_cull_mode'>
+                <option value='CullFront'>Front</option>
+                <option value='CullBack'>Back</option>
+                <option value='CullFrontAndBack'>Front and back</option>
+              </select>
+            </td>
+          </tr>
+          <tr>
+            <td>Front Face</td>
+            <td>
+              <select id='rasterizer_front_face'>
+                <option value='FrontCW'>Clockwise</option>
+                <option value='FrontCCW'>Counter clockwise</option>
+              </select>
+            </td>
+          </tr>
+        </table>
+
+        <!-- Depth state -->
+        <h2>Depth State</h2>
+        <table>
+          <tr>
+            <td class='state_value_name'>Test Enabled</td>
+            <td><input type="checkbox" id='depth_state_enabled' /></td>
+          </tr>
+          <tr>
+            <td>Write Enabled</td>
+            <td><input type="checkbox" id='depth_write_enabled' /></td>
+          </tr>
+          <tr>
+            <td>Comparison</td>
+            <td>
+              <select id='depth_comparison'>
+                <option value='DepthComparisonOpNever'>Never</option>
+                <option value='DepthComparisonOpAlways'>Always</option>
+                <option value='DepthComparisonOpEqual'>Equal</option>
+                <option value='DepthComparisonOpNotEqual'>Not equal</option>
+                <option value='DepthComparisonOpLess'>Less than</option>
+                <option value='DepthComparisonOpLessEqual'>Less than or equal</option>
+                <option value='DepthComparisonOpGreaterEqual'>Greater than or equal</option>
+                <option value='DepthComparisonOpGreater'>Greater than</option>
+              </select>
+            </td>
+          </tr>
+        </table>
+
+        <!-- Blend state -->
+        <h2>Blend State</h2>
+        <table>
+          <tr>
+            <td class='state_value_name'>Enabled</td>
+            <td><input type="checkbox" id='rasterizer_state_enabled' /></td>
+          </tr>
+          <tr>
+            <td>Cull Mode</td>
+            <td></td>
+          </tr>
+          <tr>
+            <td>Front Face</td>
+            <td></td>
+          </tr>
+        </table>
+
       </div>
     </div>
 

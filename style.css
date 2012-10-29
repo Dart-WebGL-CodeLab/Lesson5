@@ -78,6 +78,10 @@ input[type=text] {
   width:609px;
 }
 
+select {
+  width:160px;
+}
+
 #texture {
   border:dashed 2px black;
   border-radius:4px;
@@ -232,4 +236,8 @@ p {
 
 .hidden {
   display:none;
+}
+
+.state_value_name {
+  width:90px;
 }

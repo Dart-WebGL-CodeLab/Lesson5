@@ -16,6 +16,7 @@ import 'package:vector_math/vector_math_browser.dart';
 // Source files
 //---------------------------------------------------------------------
 
+part 'render_state_options.dart';
 part 'texture_dialog.dart';
 part 'application/frame_counter.dart';
 part 'application/game.dart';
@@ -24,6 +25,8 @@ part 'application/game.dart';
 FrameCounter _counter;
 /// The [TextureDialog] associated with the application
 TextureDialog _textureDialog;
+/// The [RenderStateOptions] associated with the application
+RenderStateOptions _renderStateOptions;
 
 /**
  * Update function for the application.
@@ -119,6 +122,8 @@ void main()
   replaceButton.on.click.add(_openTextureDialog);
 
   _initModelButtons();
+
+  _renderStateOptions = new RenderStateOptions();
 
   // Start the animation loop
   window.requestAnimationFrame(_onUpdate);
