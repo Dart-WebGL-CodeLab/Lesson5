@@ -12,10 +12,21 @@ class Game
   // Member variables
   //---------------------------------------------------------------------
 
+  // CanvasElement
+  CanvasElement _canvas;
   /// Spectre graphics device.
   GraphicsDevice _graphicsDevice;
   /// Immediate rendering context.
   GraphicsContext _context;
+
+  /**
+   * Retained mode debug draw manager.
+   *
+   * Can draw many different debug primitives for a specified time length.
+   */
+  DebugDrawManager _debugDrawManager;
+  bool _debugDrawCameraTransform;
+
   /**
    * Resource handler for the game.
    *
@@ -36,15 +47,20 @@ class Game
   /// Direction to modify the color.
   vec3 _direction;
   /// Random number generator
-  Random _randomGenerator;
+  Math.Random _randomGenerator;
   /// The time of the last frame
-  int _lastFrameTime;
+  double _lastFrameTime;
   /// The angle to rotate by
   double _angle;
 
   //---------------------------------------------------------------------
   // Transform variables
   //---------------------------------------------------------------------
+
+  /// Camera
+  Camera _camera;
+  /// Camera controller
+  MouseKeyboardCameraController _cameraController;
 
   /// Transformation for the mesh.
   mat4 _modelMatrix;
@@ -145,6 +161,7 @@ class Game
   Game(String id)
   {
     CanvasElement canvas = document.query(id) as CanvasElement;
+    _canvas = canvas;
 
     assert(canvas != null);
     WebGLRenderingContext gl = canvas.getContext('experimental-webgl');
@@ -164,6 +181,12 @@ class Game
     String baseUrl = "${window.location.href.substring(0, window.location.href.length - "engine.html".length)}web/resources";
     _resourceManager.setBaseURL(baseUrl);
 
+    // Create the debug draw manager.
+    _debugDrawManager = new DebugDrawManager();
+    _debugDrawCameraTransform = false;
+    // Initialize it to use our Spectre graphics device.
+    _debugDrawManager.init(_graphicsDevice);
+
     // Create the viewport
     var viewportProperties = {
       'x': 0,
@@ -178,14 +201,132 @@ class Game
     // Setup the clear color
     _color = new vec3(0.0, 0.0, 0.0);
     _direction = new vec3(1.0, 1.0, 1.0);
-    _randomGenerator = new Random();
-    _lastFrameTime = 0;
+    _randomGenerator = new Math.Random();
+    _lastFrameTime = 0.0;
     _angle = 0.0;
 
+    // Create camera
+    _camera = new Camera();
+    // Set camera aspect ratio
+    _camera.aspectRatio = canvas.width.toDouble()/canvas.height.toDouble();
+    // Create a mouse keyboard camera controller
+    _cameraController = new MouseKeyboardCameraController();
+    // Bind the controls for the camera
+    _bindControls();
     _createTransforms();
     _createShaders();
     _createState();
     _createBuffers();
+  }
+
+  /* Keyboard key codes */
+  static const _keyCodeA = 65;
+  static const _keyCodeD = 68;
+  static const _keyCodeS = 83;
+  static const _keyCodeT = 84;
+  static const _keyCodeW = 87;
+
+  /**
+   * Responds to key down events
+   */
+  void _keyDownHandler(KeyboardEvent event) {
+    switch (event.keyCode) {
+      case _keyCodeA:
+        _cameraController.strafeLeft = true;
+      break;
+      case _keyCodeD:
+        _cameraController.strafeRight = true;
+      break;
+      case _keyCodeS:
+        _cameraController.backward = true;
+      break;
+      case _keyCodeW:
+        _cameraController.forward = true;
+      break;
+      case _keyCodeT:
+        _debugDrawCameraTransform = true;
+      break;
+    }
+  }
+
+  /**
+   * Responds to key up events
+   */
+  void _keyUpHandler(KeyboardEvent event) {
+    switch (event.keyCode) {
+      case _keyCodeA:
+        _cameraController.strafeLeft = false;
+      break;
+      case _keyCodeD:
+        _cameraController.strafeRight = false;
+      break;
+      case _keyCodeS:
+        _cameraController.backward = false;
+      break;
+      case _keyCodeW:
+        _cameraController.forward = false;
+      break;
+    }
+  }
+
+  /**
+   * Responds to mouse move events
+   */
+  void _mouseMoveHandler(MouseEvent event) {
+    if (_pointerLocked) {
+      _cameraController.accumDX += event.webkitMovementX;
+      _cameraController.accumDY += event.webkitMovementY;
+    }
+  }
+
+  bool get _pointerLocked => _canvas == document.webkitPointerLockElement;
+
+  /**
+   * Respond to pointer lock state changes.
+   */
+  void _pointerLockChange(Event event) {
+    if (_pointerLocked) {
+      print('Canvas owns pointer.');
+    } else {
+      print('Canvas does not own pointer.');
+    }
+  }
+
+  /**
+   * Respond to clicks on the canvas
+   */
+  void _canvasClicked(Event event) {
+    // Request pointer lock
+    _canvas.webkitRequestPointerLock();
+  }
+
+  /**
+   * Bind the keyboard and mouse to the camera controller
+   */
+  void _bindControls() {
+    _canvas.on.click.add(_canvasClicked);
+    document.on.pointerLockChange.add(_pointerLockChange);
+    document.on.keyDown.add(_keyDownHandler);
+    document.on.keyUp.add(_keyUpHandler);
+    document.on.mouseMove.add(_mouseMoveHandler);
+  }
+
+  /**
+   * Setup the camera transform
+   */
+  void _updateCameraTransform() {
+    mat4 viewProjectionMatrix = _camera.projectionMatrix;
+    mat4 viewMatrix = _camera.lookAtMatrix;
+    if (_debugDrawCameraTransform) {
+      mat4 T = new mat4.copy(viewMatrix);
+      T[2].scale(-1.0);
+      T[3].xyz = _camera.position;
+      _debugDrawManager.addAxes(T, 2.0, 2.0);
+      _debugDrawCameraTransform = false;
+    }
+    viewProjectionMatrix.multiply(viewMatrix);
+    // Copy into
+    viewProjectionMatrix.copyIntoArray(_viewProjectitonMatrixArray);
   }
 
   /**
@@ -197,24 +338,13 @@ class Game
     Viewport viewport = _graphicsDevice.getDeviceChild(_viewport);
     double aspectRatio = viewport.width / viewport.height;
 
-    // Create the view-projection matrix
-    mat4 viewProjectionMatrix = makePerspective(
-      0.785398163, // Field of view in radians (45 degrees)
-      aspectRatio, // Aspect ratio
-      0.01,        // Near plane
-      100.0        // Far plane
-    );
-
-    mat4 viewMatrix = makeLookAt(
-      new vec3.raw(0.0, 0.0, -2.5), // Eye position
-      new vec3.raw(0.0, 0.0,  0.0), // Look at
-      new vec3.raw(0.0, 1.0,  0.0)  // Up direction
-    );
-
-    viewProjectionMatrix.multiply(viewMatrix);
+    // The camera is located -2.5 units along the Z axis.
+    _camera.position = new vec3.raw(0.0, 0.0, -2.5);
+    // The camera is pointed at the origin.
+    _camera.focusPosition = new vec3.raw(0.0, 0.0, 0.0);
 
     _viewProjectitonMatrixArray = new Float32Array(16);
-    viewProjectionMatrix.copyIntoArray(_viewProjectitonMatrixArray);
+    _updateCameraTransform();
 
     // Create the model matrix
     // Center it at 0.0, 0.0, 0.0
@@ -323,6 +453,77 @@ class Game
     _texture = _graphicsDevice.createTexture2D('Texture', textureUsage);
   }
 
+  void _drawGridRaw(int gridLines, vec3 x, vec3 z, vec4 color) {
+    final double midLine = (gridLines~/2).toDouble();
+    vec3 o = new vec3.zero();
+    o.sub(z*midLine);
+    o.sub(x*midLine);
+
+    for (int i = 0; i <= gridLines; i++) {
+      vec3 start = o + (z * (i-midLine)) + (x * -midLine);
+      vec3 end = o + (z * (i-midLine)) + (x * midLine);
+      _debugDrawManager.addLine(start, end, color);
+    }
+
+    for (int i = 0; i <= gridLines; i++) {
+      vec3 start = o + (x * (i-midLine)) + (z * -midLine);
+      vec3 end = o + (x * (i-midLine)) + (z * midLine);
+      _debugDrawManager.addLine(start, end, color);
+    }
+  }
+
+  void _drawDebugGrid() {
+    _drawGridRaw(4, new vec3.raw(1.0, 0.0, 0.0),
+                     new vec3.raw(0.0, 0.0, 1.0),
+                     new vec4.raw(1.0, 1.0, 1.0, 1.0));
+  }
+
+  Map<String, vec4> _colors = {
+    'Red': new vec4(1.0, 0.0, 0.0, 1.0),
+    'Green': new vec4(0.0, 1.0, 0.0, 1.0),
+    'Blue': new vec4(0.0, 0.0, 1.0, 1.0),
+    'Gray': new vec4(0.3, 0.3, 0.3, 1.0),
+    'White': new vec4(1.0, 1.0, 1.0, 1.0),
+    'Orange': new vec4(1.0, 0.6475, 0.0, 1.0)
+  };
+
+  vec3 _unitX = new vec3(1.0, 0.0, 0.0);
+  vec3 _unitY = new vec3(0.0, 1.0, 0.0);
+  vec3 _unitZ = new vec3(0.0, 0.0, 1.0);
+  vec3 _origin = new vec3(0.0, 0.0, 0.0);
+
+  mat4 _rotateX = new mat4.identity();
+  mat4 _rotateY = new mat4.identity();
+  mat4 _rotateZ = new mat4.identity();
+
+  /* Draw a bunch of debug primitives */
+  void _drawDebugPrims(double dt) {
+    double deltaAngle = dt * Math.PI;
+    _angle += deltaAngle;
+    double _scale = (sin(_angle) + 1.0)/2.0;
+
+    _rotateX.rotateX(deltaAngle);
+    _rotateY.rotateY(deltaAngle);
+    _rotateZ.rotateZ(deltaAngle);
+
+    // Rotating circles
+    {
+      _debugDrawManager.addCircle(new vec3(0.0, 10.0, 0.0), _rotateY.transformed3(_unitX), 3.14, _colors['Red']);
+      _debugDrawManager.addCircle(new vec3(0.0, 0.0, 10.0), _rotateZ.transformed3(_unitY), 3.14, _colors['Green']);
+      _debugDrawManager.addCircle(new vec3(10.0, 0.0, 0.0), _rotateX.transformed3(_unitZ), 3.14, _colors['Blue']);
+    }
+
+
+    // AABB and a line from min to max
+    {
+      _debugDrawManager.addAABB(new vec3(5.0, 5.0, 5.0), new vec3(10.0, 10.0, 10.0), _colors['Gray']);
+      _debugDrawManager.addCross(new vec3(5.0, 5.0, 5.0), _colors['White']);
+      _debugDrawManager.addCross(new vec3(10.0, 10.0, 10.0), _colors['White']);
+      _debugDrawManager.addLine(new vec3(5.0, 5.0, 5.0), new vec3(10.0, 10.0, 10.0), _colors['Orange']);
+    }
+  }
+
+
   //---------------------------------------------------------------------
   // Public methods
   //---------------------------------------------------------------------
@@ -333,14 +534,19 @@ class Game
    * All game logic should be updated within this method.
    * Any animation should be based upon the current [time].
    */
-  void update(int time)
+  void update(double time)
   {
     // Get the change in time
     double dt = (time - _lastFrameTime) * 0.001;
     _lastFrameTime = time;
+    // Update the debug draw world
+    _debugDrawManager.update(dt);
+    // Update the camera
+    _cameraController.UpdateCamera(dt, _camera);
+    _updateCameraTransform();
 
     // Rotate the model
-    double angle = dt * PI;
+    double angle = dt * Math.PI;
 
     mat4 rotation = new mat4.rotationX(angle);
     _modelMatrix.multiply(rotation);
@@ -365,6 +571,12 @@ class Game
         _direction[i] = 1.0;
       }
     }
+
+    _drawDebugGrid();
+    _drawDebugPrims(dt);
+
+    // Prepare the debug draw manager to render.
+    _debugDrawManager.prepareForRender();
   }
 
   /**
@@ -409,6 +621,8 @@ class Game
     // Draw the mesh
     _context.setPrimitiveTopology(GraphicsContext.PrimitiveTopologyTriangles);
     _context.drawIndexed(_meshIndexCount, 0);
+
+    _debugDrawManager.render(_camera);
   }
 
   //---------------------------------------------------------------------
@@ -416,7 +630,7 @@ class Game
   //---------------------------------------------------------------------
 
   /// Retrieves the instance of [Game].
-  static get instance() => _gameInstance;
+  static get instance => _gameInstance;
 
   /**
    * Sets the mesh to display.
@@ -464,6 +678,30 @@ class Game
     _resourceManager.loadResource(textureResource);
   }
 
+  /**
+   * Reconfigures the rasterizer state for the rendering.
+   */
+  void setRasterizerStateProperties(String props)
+  {
+    _graphicsDevice.configureDeviceChild(_rasterizerState, props);
+  }
+
+  /**
+   * Reconfigures the depth state for the rendering.
+   */
+  void setDepthStateProperties(String props)
+  {
+    _graphicsDevice.configureDeviceChild(_depthState, props);
+  }
+
+  /**
+   * Reconfigures the blend state for the rendering.
+   */
+  void setBlendStateProperties(String props)
+  {
+    _graphicsDevice.configureDeviceChild(_blendState, props);
+  }
+
   //---------------------------------------------------------------------
   // Static methods
   //---------------------------------------------------------------------
@@ -485,7 +723,7 @@ class Game
    *
    * The current [time] is passed in.
    */
-  static void onUpdate(int time)
+  static void onUpdate(double time)
   {
     _gameInstance.update(time);
     _gameInstance.draw();

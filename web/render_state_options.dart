@@ -19,6 +19,18 @@ class RenderStateOptions
   static const String _depthStateWriteEnabledId = '#depth_write_enabled';
   static const String _depthStateComparisonId = '#depth_comparison';
 
+  static const String _blendStateEnabledId = '#blend_state_enabled';
+  static const String _blendStateSourceColorId = '#source_color_function';
+  static const String _blendStateDestinationColorId = '#destination_color_function';
+  static const String _blendStateSourceAlphaId = '#source_alpha_function';
+  static const String _blendStateDestinationAlphaId = '#destination_alpha_function';
+  static const String _blendStateColorOperationId = '#blend_color_operation';
+  static const String _blendStateAlphaOperationId = '#blend_alpha_operation';
+  static const String _blendStateWriteRedId = '#write_red_enabled';
+  static const String _blendStateWriteGreenId = '#write_green_enabled';
+  static const String _blendStateWriteBlueId = '#write_blue_enabled';
+  static const String _blendStateWriteAlphaId = '#write_alpha_enabled';
+
   //---------------------------------------------------------------------
   // Rasterizer state member variables
   //---------------------------------------------------------------------
@@ -51,6 +63,28 @@ class RenderStateOptions
 
   /// Callback for when the [BlendState] changes.
   StateEvent blendStateCallback;
+  /// Whether the blend state is enabled.
+  InputElement _blendStateEnabledElement;
+  /// Source color function.
+  SelectElement _blendStateSourceColorElement;
+  /// Destination color function.
+  SelectElement _blendStateDestinationColorElement;
+  /// Source alpha function.
+  SelectElement _blendSourceAlphaElement;
+  /// Destination alpha function.
+  SelectElement _blendDestinationAlphaElement;
+  /// Color operation.
+  SelectElement _blendColorOperationElement;
+  /// Alpha operation
+  SelectElement _blendAlphaOperationElement;
+  /// Whether the red channel is writable.
+  InputElement _blendStateWriteRedElement;
+  /// Whether the green channel is writable.
+  InputElement _blendStateWriteGreenElement;
+  /// Whether the blue channel is writable.
+  InputElement _blendStateWriteBlueElement;
+  /// Whether the alpha channel is writable.
+  InputElement _blendStateWriteAlphaElement;
 
   //---------------------------------------------------------------------
   // Construction
@@ -81,6 +115,40 @@ class RenderStateOptions
 
     _depthStateComparisonElement = _querySelect(_depthStateComparisonId);
     _depthStateComparisonElement.on.change.add((_) { _onDepthStateChanged(); });
+
+    // Setup the blend state
+    _blendStateEnabledElement = _queryInput(_blendStateEnabledId);
+    _blendStateEnabledElement.on.change.add((_) { _onBlendStateChanged(); });
+
+    _blendStateSourceColorElement = _querySelect(_blendStateSourceColorId);
+    _blendStateSourceColorElement.on.change.add((_) { _onBlendStateChanged(); });
+
+    _blendStateDestinationColorElement = _querySelect(_blendStateSourceColorId);
+    _blendStateDestinationColorElement.on.change.add((_) { _onBlendStateChanged(); });
+
+    _blendSourceAlphaElement = _querySelect(_blendStateSourceAlphaId);
+    _blendSourceAlphaElement.on.change.add((_) { _onBlendStateChanged(); });
+
+    _blendDestinationAlphaElement = _querySelect(_blendStateDestinationAlphaId);
+    _blendDestinationAlphaElement.on.change.add((_) { _onBlendStateChanged(); });
+
+    _blendColorOperationElement = _querySelect(_blendStateColorOperationId);
+    _blendColorOperationElement.on.change.add((_) { _onBlendStateChanged(); });
+
+    _blendAlphaOperationElement = _querySelect(_blendStateAlphaOperationId);
+    _blendAlphaOperationElement.on.change.add((_) { _onBlendStateChanged(); });
+
+    _blendStateWriteRedElement = _queryInput(_blendStateWriteRedId);
+    _blendStateWriteRedElement.on.change.add((_) { _onBlendStateChanged(); });
+
+    _blendStateWriteGreenElement = _queryInput(_blendStateWriteGreenId);
+    _blendStateWriteGreenElement.on.change.add((_) { _onBlendStateChanged(); });
+
+    _blendStateWriteBlueElement = _queryInput(_blendStateWriteBlueId);
+    _blendStateWriteBlueElement.on.change.add((_) { _onBlendStateChanged(); });
+
+    _blendStateWriteAlphaElement = _queryInput(_blendStateWriteAlphaId);
+    _blendStateWriteAlphaElement.on.change.add((_) { _onBlendStateChanged(); });
   }
 
   /**
@@ -115,8 +183,8 @@ class RenderStateOptions
       '''
 {
   "cullEnabled": ${_rasterizerStateEnabledElement.checked},
-  "cullMode": ${_rasterizerStateCullModeElement.value},
-  "cullFrontFace": ${_rasterizerStateFrontFaceElement.value}
+  "cullMode": "${_rasterizerStateCullModeElement.value}",
+  "cullFrontFace": "${_rasterizerStateFrontFaceElement.value}"
 }
       ''';
 
@@ -136,7 +204,7 @@ class RenderStateOptions
 {
   "depthTestEnabled": ${_depthStateEnabledElement.checked},
   "depthWriteEnabled": ${_depthStateWriteEnabledElement.checked},
-  "depthComparisonOp": ${_depthStateComparisonElement.value}
+  "depthComparisonOp": "${_depthStateComparisonElement.value}"
 }
       ''';
 
@@ -154,13 +222,17 @@ class RenderStateOptions
       String props =
       '''
 {
-  "blendEnable": ${_depthStateEnabledElement.checked},
-  "blendSourceColorFunc": ${_depthStateWriteEnabledElement.checked},
-  "blendDestColorFunc": ${_depthStateComparisonElement.value}
-  "blendSourceAlphaFunc": ${_depthStateComparisonElement.value}
-  "blendDestAlphaFunc": ${_depthStateComparisonElement.value}
-  "blendColorOp": ${_depthStateComparisonElement.value}
-  "blendAlphaOp": ${_depthStateComparisonElement.value}
+  "blendEnable": ${_blendStateEnabledElement.checked},
+  "blendSourceColorFunc": "${_blendStateSourceColorElement.value}",
+  "blendDestColorFunc": "${_blendStateDestinationColorElement.value}",
+  "blendSourceAlphaFunc": "${_blendSourceAlphaElement.value}",
+  "blendDestAlphaFunc": "${_blendDestinationAlphaElement.value}",
+  "blendColorOp": "${_blendColorOperationElement.value}",
+  "blendAlphaOp": "${_blendAlphaOperationElement.value}",
+  "writeRenderTargetRed": ${_blendStateWriteRedElement.checked},
+  "writeRenderTargetGreen": ${_blendStateWriteGreenElement.checked},
+  "writeRenderTargetBlue": ${_blendStateWriteBlueElement.checked},
+  "writeRenderTargetAlpha": ${_blendStateWriteAlphaElement.checked}
 }
       ''';
 

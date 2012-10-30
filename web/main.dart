@@ -8,7 +8,7 @@
 //---------------------------------------------------------------------
 
 import 'dart:html';
-import 'dart:math';
+import 'dart:math' as Math;
 import 'package:spectre/spectre.dart';
 import 'package:vector_math/vector_math_browser.dart';
 
@@ -33,7 +33,7 @@ RenderStateOptions _renderStateOptions;
  *
  * The current [time] is passed in.
  */
-void _onUpdate(int time)
+void _onUpdate(double time)
 {
   _counter.update(time);
   Game.onUpdate(time);
@@ -111,6 +111,7 @@ void _initModelButtons()
 void _onRasterizerStateChanged(String value)
 {
   print(value);
+  Game.instance.setRasterizerStateProperties(value);
 }
 
 /**
@@ -119,6 +120,16 @@ void _onRasterizerStateChanged(String value)
 void _onDepthStateChanged(String value)
 {
   print(value);
+  Game.instance.setDepthStateProperties(value);
+}
+
+/**
+ * Callback for when the blend state is modified.
+ */
+void _onBlendStateChanged(String value)
+{
+  print(value);
+  Game.instance.setBlendStateProperties(value);
 }
 
 /**
@@ -142,6 +153,7 @@ void main()
   _renderStateOptions = new RenderStateOptions();
   _renderStateOptions.rasterizerCallback = _onRasterizerStateChanged;
   _renderStateOptions.depthStateCallback = _onDepthStateChanged;
+  _renderStateOptions.blendStateCallback = _onBlendStateChanged;
 
   // Start the animation loop
   window.requestAnimationFrame(_onUpdate);
