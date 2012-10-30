@@ -714,7 +714,7 @@ class Game
     _gameInstance = new Game('#webgl_host');
 
     // Set the mesh and associated texture
-    _gameInstance.texture = '/textures/dart_tex.png';
+    _gameInstance.texture = '/textures/dart_tex_alpha.png';
     _gameInstance.mesh = '/meshes/cube.mesh';
   }
 
